@@ -205,6 +205,9 @@
             "./.env"
         ]
     },
+    "symfony/form": {
+        "version": "v5.3.4"
+    },
     "symfony/framework-bundle": {
         "version": "5.3",
         "recipe": {
@@ -242,11 +245,32 @@
             "ref": "fadbfe33303a76e25cb63401050439aa9b1a9c7f"
         }
     },
+    "symfony/options-resolver": {
+        "version": "v5.3.4"
+    },
     "symfony/orm-pack": {
         "version": "v2.1.0"
     },
+    "symfony/phpunit-bridge": {
+        "version": "5.3",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "master",
+            "version": "5.3",
+            "ref": "905679249e7b10f06c572917a9022a72cbfedc04"
+        },
+        "files": [
+            "./.env.test",
+            "./bin/phpunit",
+            "./phpunit.xml.dist",
+            "./tests/bootstrap.php"
+        ]
+    },
     "symfony/polyfill-intl-grapheme": {
         "version": "v1.23.1"
+    },
+    "symfony/polyfill-intl-icu": {
+        "version": "v1.23.0"
     },
     "symfony/polyfill-intl-normalizer": {
         "version": "v1.23.0"
@@ -265,6 +289,12 @@
     },
     "symfony/profiler-pack": {
         "version": "v1.0.5"
+    },
+    "symfony/property-access": {
+        "version": "v5.3.4"
+    },
+    "symfony/property-info": {
+        "version": "v5.3.4"
     },
     "symfony/proxy-manager-bridge": {
         "version": "v5.3.4"
@@ -315,6 +345,19 @@
     },
     "symfony/twig-pack": {
         "version": "v1.0.1"
+    },
+    "symfony/validator": {
+        "version": "4.3",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "master",
+            "version": "4.3",
+            "ref": "3eb8df139ec05414489d55b97603c5f6ca0c44cb"
+        },
+        "files": [
+            "./config/packages/test/validator.yaml",
+            "./config/packages/validator.yaml"
+        ]
     },
     "symfony/var-dumper": {
         "version": "v5.3.6"
