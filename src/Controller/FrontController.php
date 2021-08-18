@@ -3,10 +3,13 @@
 namespace App\Controller;
 
 use App\Entity\Video;
+use mysql_xdevapi\Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Entity\Category;
 use App\Utils\CategoryTreeFrontPage;
+use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 class FrontController extends AbstractController
 {
@@ -19,17 +22,22 @@ class FrontController extends AbstractController
     }
 
     /**
-     * @Route("/video-list/category/{categoryname},{id}", name="video_list")
+     * @Route("/video-list/category/{categoryname},{id}/{page}", defaults={"page": "1"}, name="video_list")
      */
-    public function videoList($id, CategoryTreeFrontPage $categories)
+    public function videoList($id, $page, CategoryTreeFrontPage $categories, Request $request)
     {
+
+        $ids = $categories->getChildIds($id);
+        array_push($ids, $id);
+
+        $videos = $this->getDoctrine()
+            ->getRepository(Video::class)
+            ->findByChildIds($ids ,$page, $request->get('sortby'));
+
         $categories->getCategoryListAndParent($id);
-
-        $videos = $this->getDoctrine()->getRepository(Video::class)->findAll();
-
         return $this->render('front/video_list.html.twig',[
             'subcategories' => $categories,
-            'videos' => $videos
+            'videos'=>$videos
         ]);
     }
 
@@ -42,11 +50,28 @@ class FrontController extends AbstractController
     }
 
     /**
-     * @Route("/search-results", methods={"POST"}, name="search_results")
+     * @Route("/search-results/{page}", methods={"GET"},defaults={"page": "1"}, name="search_results")
      */
-    public function searchResults()
+    public function searchResults($page, Request $request)
     {
-        return $this->render('front/search_results.html.twig');
+        {
+            $videos = null;
+            $query = null;
+
+            if($query = $request->get('query'))
+            {
+                $videos = $this->getDoctrine()
+                    ->getRepository(Video::class)
+                    ->findByTitle($query, $page, $request->get('sortby'));
+
+                if(!$videos->getItems()) $videos = null;
+            }
+
+            return $this->render('front/search_results.html.twig',[
+                'videos' => $videos,
+                'query' => $query,
+            ]);
+        }
     }
 
     /**
@@ -68,9 +93,19 @@ class FrontController extends AbstractController
     /**
      * @Route("/login", name="login")
      */
-    public function login()
+    public function login(AuthenticationUtils $helper)
     {
-        return $this->render('front/login.html.twig');
+        return $this->render('front/login.html.twig',[
+            'error' => $helper->getLastAuthenticationError()
+        ]);
+    }
+
+    /**
+     * @Route("/logout", name="logout")
+     */
+    public function logout(): void
+    {
+        throw new \Exception('this should never be reached');
     }
 
     /**
