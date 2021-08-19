@@ -1,31 +1,36 @@
 <?php
-
+/*
+|--------------------------------------------------------
+| copyright netprogs.pl | available only at Udemy.com | further distribution is prohibited  ***
+|--------------------------------------------------------
+*/
 namespace App\Entity;
 
-use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
-use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
- * @ORM\Table(name="users")
- * @UniqueEntity("email")
- * @ORM\Entity(repositoryClass=UserRepository::class)
- */
-class User implements UserInterface, PasswordAuthenticatedUserInterface
+    * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
+    * @ORM\Table(name="users")
+    * @UniqueEntity("email")
+*/
+class User implements UserInterface
 {
     /**
-     * @ORM\Id
-     * @ORM\GeneratedValue
+     * @ORM\Id()
+     * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
      */
     private $id;
 
     /**
-     * @Assert\NotBlank(message="Please enter a valid email adress.")
      * @ORM\Column(type="string", length=180, unique=true)
+     * @Assert\NotBlank(message = "Please enter a valid email address.")
+     *  @Assert\Email()
      */
     private $email;
 
@@ -36,21 +41,21 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     /**
      * @var string The hashed password
-     * @Assert\NotBlank(message="Please enter a valid password.")
-     * @Assert\Length(max=4096)
      * @ORM\Column(type="string")
+     * @Assert\NotBlank(message = "Please enter a valid password")
+     * @Assert\Length(max=4096)
      */
     private $password;
 
     /**
      * @ORM\Column(type="string", length=45)
-     * * @Assert\NotBlank(message="Please enter a valid name.")
+     * @Assert\NotBlank(message = "Valid first name is required.")
      */
     private $name;
 
     /**
      * @ORM\Column(type="string", length=45)
-     * @Assert\NotBlank(message="Please enter a valid last name.")
+     * @Assert\NotBlank(message = "Valid last name is required.")
      */
     private $last_name;
 
@@ -58,6 +63,24 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @ORM\Column(type="string", length=255, nullable=true)
      */
     private $vimeo_api_key;
+
+    /**
+     * @ORM\ManyToMany(targetEntity="App\Entity\Video", mappedBy="usersThatLike")
+     * @ORM\JoinTable(name="likes")
+     */
+    private $likedVideos;
+
+    /**
+     * @ORM\ManyToMany(targetEntity="App\Entity\Video", mappedBy="usersThatDontLike")
+     * @ORM\JoinTable(name="dislikes")
+     */
+    private $dislikedVideos;
+
+    public function __construct()
+    {
+        $this->likedVideos = new ArrayCollection();
+        $this->dislikedVideos = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -80,14 +103,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * A visual identifier that represents this user.
      *
      * @see UserInterface
-     */
-    public function getUserIdentifier(): string
-    {
-        return (string) $this->email;
-    }
-
-    /**
-     * @deprecated since Symfony 5.3, use getUserIdentifier instead
      */
     public function getUsername(): string
     {
@@ -114,11 +129,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
-     * @see PasswordAuthenticatedUserInterface
+     * @see UserInterface
      */
     public function getPassword(): string
     {
-        return $this->password;
+        return (string) $this->password;
     }
 
     public function setPassword(string $password): self
@@ -129,14 +144,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
-     * Returning a salt is only needed, if you are not using a modern
-     * hashing algorithm (e.g. bcrypt or sodium) in your security.yaml.
-     *
      * @see UserInterface
      */
-    public function getSalt(): ?string
+    public function getSalt()
     {
-        return null;
+        // not needed when using the "bcrypt" algorithm in security.yaml
     }
 
     /**
@@ -183,4 +195,61 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
         return $this;
     }
+
+    /**
+     * @return Collection|Video[]
+     */
+    public function getLikedVideos(): Collection
+    {
+        return $this->likedVideos;
+    }
+
+    public function addLikedVideo(Video $likedVideo): self
+    {
+        if (!$this->likedVideos->contains($likedVideo)) {
+            $this->likedVideos[] = $likedVideo;
+            $likedVideo->addUsersThatLike($this);
+        }
+
+        return $this;
+    }
+
+    public function removeLikedVideo(Video $likedVideo): self
+    {
+        if ($this->likedVideos->contains($likedVideo)) {
+            $this->likedVideos->removeElement($likedVideo);
+            $likedVideo->removeUsersThatLike($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Video[]
+     */
+    public function getDislikedVideos(): Collection
+    {
+        return $this->dislikedVideos;
+    }
+
+    public function addDislikedVideo(Video $dislikedVideo): self
+    {
+        if (!$this->dislikedVideos->contains($dislikedVideo)) {
+            $this->dislikedVideos[] = $dislikedVideo;
+            $dislikedVideo->addUsersThatDontLike($this);
+        }
+
+        return $this;
+    }
+
+    public function removeDislikedVideo(Video $dislikedVideo): self
+    {
+        if ($this->dislikedVideos->contains($dislikedVideo)) {
+            $this->dislikedVideos->removeElement($dislikedVideo);
+            $dislikedVideo->removeUsersThatDontLike($this);
+        }
+
+        return $this;
+    }
 }
+
