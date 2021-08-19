@@ -2,9 +2,11 @@
 
 namespace App\Controller;
 
+use App\Entity\Comment;
 use App\Entity\User;
 use App\Entity\Video;
 use App\Form\UserType;
+use App\Repository\VideoRepository;
 use mysql_xdevapi\Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -46,12 +48,35 @@ class FrontController extends AbstractController
     }
 
     /**
-     * @Route("/video-details", name="video_details")
+     * @Route("/video-details/{video}", name="video_details")
      */
-    public function videoDetails()
+    public function videoDetails(VideoRepository $repo, $video)
     {
-        return $this->render('front/video_details.html.twig');
+        return $this->render('front/video_details.html.twig',
+            [
+                'video'=>$repo->videoDetails($video),
+            ]);
     }
+
+    /**
+     * @Route("/new-comment/{video}", methods={"POST"}, name="new_comment")
+     */
+    public function newComment(Video $video, Request $request){
+        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_REMEMBERED');
+        if(!empty(trim($request->request->get('comment')))){
+
+            $entityManager = $this->getDoctrine()->getManager();
+            $comment = new Comment();
+            $comment->setContent($request->request->get('comment'));
+            $comment->setUser($this->getUser());
+            $comment->setVideo($video);
+
+            $entityManager->persist($comment);
+            $entityManager->flush();
+        }
+        return $this->redirectToRoute('video_details', ['video'=>$video->getId()]);
+    }
+
 
     /**
      * @Route("/search-results/{page}", methods={"GET"},defaults={"page": "1"}, name="search_results")

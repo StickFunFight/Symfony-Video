@@ -105,7 +105,7 @@ class Video
 
         return $this;
     }
-    
+
     public function getVimeoId($user): ?string
     {
         if($user)

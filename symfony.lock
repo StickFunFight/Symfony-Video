@@ -106,6 +106,9 @@
     "knplabs/knp-paginator-bundle": {
         "version": "v5.6.0"
     },
+    "knplabs/knp-time-bundle": {
+        "version": "v1.16.1"
+    },
     "laminas/laminas-code": {
         "version": "4.4.2"
     },
@@ -237,18 +240,6 @@
             "./config/packages/sensio_framework_extra.yaml"
         ]
     },
-    "sensiolabs/security-checker": {
-        "version": "4.0",
-        "recipe": {
-            "repo": "github.com/symfony/recipes",
-            "branch": "master",
-            "version": "4.0",
-            "ref": "160c9b600564faa1224e8f387d49ef13ceb8b793"
-        },
-        "files": [
-            "./config/packages/security_checker.yaml"
-        ]
-    },
     "symfony/asset": {
         "version": "v5.3.4"
     },
@@ -376,9 +367,6 @@
             "ref": "fadbfe33303a76e25cb63401050439aa9b1a9c7f"
         }
     },
-    "symfony/mime": {
-        "version": "v5.3.4"
-    },
     "symfony/options-resolver": {
         "version": "v5.3.4"
     },
@@ -416,9 +404,6 @@
         "version": "v1.23.1"
     },
     "symfony/polyfill-intl-icu": {
-        "version": "v1.23.0"
-    },
-    "symfony/polyfill-intl-idn": {
         "version": "v1.23.0"
     },
     "symfony/polyfill-intl-normalizer": {
