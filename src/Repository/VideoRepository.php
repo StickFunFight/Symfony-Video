@@ -1,5 +1,9 @@
 <?php
-
+/*
+|--------------------------------------------------------
+| copyright netprogs.pl | available only at Udemy.com | further distribution is prohibited  ***
+|--------------------------------------------------------
+*/
 namespace App\Repository;
 
 use App\Entity\Video;
@@ -21,35 +25,70 @@ class VideoRepository extends ServiceEntityRepository
         $this->paginator = $paginator;
     }
 
-    public function findByChildIds(array $value, int $page, ?string  $sort_method)
+    public function findByChildIds(array $value, int $page, ?string $sort_method)
     {
+        if($sort_method != 'rating')
+        {
+            $dbquery = $this->createQueryBuilder('v')
+                ->andWhere('v.category IN (:val)')
+                ->leftJoin('v.comments', 'c')
+                ->leftJoin('v.usersThatLike', 'l')
+                ->leftJoin('v.usersThatDontLike', 'd')
+                ->addSelect('c','l','d')
+                ->setParameter('val', $value)
+                ->orderBy('v.title', $sort_method);
+        }
+        else
+        {
+            $dbquery =  $this->createQueryBuilder('v')
+                ->addSelect('COUNT(l) AS HIDDEN likes') // bez hidden zwróci array: count + entity
+                ->leftJoin('v.usersThatLike', 'l')
+                ->andWhere('v.category IN (:val)')
+                ->setParameter('val', $value)
+                ->groupBy('v')
+                ->orderBy('likes', 'DESC');
+        }
 
-        $sort_method = $sort_method != 'rating' ? $sort_method : 'ASC';
-        $dbquery = $this->createQueryBuilder('v')
-            ->andWhere('v.category IN (:val)')
-            ->setParameter('val', $value)
-            ->orderBy('v.title', $sort_method)
-            ->getQuery();
+        $dbquery->getQuery();
 
-        $pagination = $this->paginator->paginate($dbquery, $page, 5);
+        $pagination = $this->paginator->paginate($dbquery, $page, Video::perPage);
         return $pagination;
     }
 
-    public function findByTitle(string $qeury, int $page, ?string $sort_method){
-    $sort_method = $sort_method != 'rating' ? $sort_method: 'ASC';
-
-    $qeurybuilder = $this->createQueryBuilder('v');
-    $searchTerms = $this->prepareQuery($qeury);
-
-    foreach($searchTerms as $key => $term)
+    public function findByTitle(string $query, int $page, ?string $sort_method)
     {
-        $qeurybuilder->orWhere('v.title like :t_'.$key)
-            ->setParameter('t_'.$key, '%'.trim($term).'%');
-    }
-    $dbqeury = $qeurybuilder->orderBy('v.title', $sort_method)->getQuery();
 
-    return $this->paginator->paginate($dbqeury, $page ,5);
+        $querybuilder = $this->createQueryBuilder('v');
+        $searchTerms = $this->prepareQuery($query);
 
+        foreach ($searchTerms as $key => $term)
+        {
+            $querybuilder
+                ->orWhere('v.title LIKE :t_'.$key)
+                ->setParameter('t_'.$key, '%'.trim($term).'%');
+        }
+
+        if($sort_method != 'rating')
+        {
+            $dbquery =  $querybuilder
+                ->orderBy('v.title', $sort_method)
+                ->leftJoin('v.comments', 'c')
+                ->leftJoin('v.usersThatLike', 'l')
+                ->leftJoin('v.usersThatDontLike', 'd')
+                ->addSelect('c','l','d')
+                ->getQuery();
+        }
+        else
+        {
+            $dbquery =  $querybuilder
+                ->addSelect('COUNT(l) AS HIDDEN likes')
+                ->leftJoin('v.usersThatLike', 'l')
+                ->groupBy('v')
+                ->orderBy('likes', 'DESC')
+                ->getQuery();
+        }
+
+        return $this->paginator->paginate($dbquery, $page, Video::perPage);
     }
 
     public function videoDetails($id)
@@ -64,13 +103,14 @@ class VideoRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
     }
 
-    private  function prepareQuery(string $query): array{
+    private function prepareQuery(string $query): array
+    {
         return explode(' ',$query);
     }
 
-    // /**
-    //  * @return Video[] Returns an array of Video objects
-    //  */
+//    /**
+//     * @return Video[] Returns an array of Video objects
+//     */
     /*
     public function findByExampleField($value)
     {
@@ -83,7 +123,7 @@ class VideoRepository extends ServiceEntityRepository
             ->getResult()
         ;
     }
-    */
+     */
 
     /*
     public function findOneBySomeField($value): ?Video
@@ -95,5 +135,5 @@ class VideoRepository extends ServiceEntityRepository
             ->getOneOrNullResult()
         ;
     }
-    */
+     */
 }

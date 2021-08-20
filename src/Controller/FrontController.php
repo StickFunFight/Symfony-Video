@@ -1,21 +1,24 @@
 <?php
-
+/*
+|--------------------------------------------------------
+| copyright netprogs.pl | available only at Udemy.com | further distribution is prohibited  ***
+|--------------------------------------------------------
+*/
 namespace App\Controller;
 
-use App\Entity\Comment;
-use App\Entity\User;
-use App\Entity\Video;
-use App\Form\UserType;
-use App\Repository\VideoRepository;
-use mysql_xdevapi\Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Entity\Category;
+use App\Entity\Video;
+use App\Repository\VideoRepository;
 use App\Utils\CategoryTreeFrontPage;
-use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
-use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
+use App\Entity\User;
+use App\Form\UserType;
+use App\Entity\Comment;
+use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
+use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 
 class FrontController extends AbstractController
 {
@@ -32,7 +35,6 @@ class FrontController extends AbstractController
      */
     public function videoList($id, $page, CategoryTreeFrontPage $categories, Request $request)
     {
-
         $ids = $categories->getChildIds($id);
         array_push($ids, $id);
 
@@ -61,46 +63,49 @@ class FrontController extends AbstractController
     /**
      * @Route("/new-comment/{video}", methods={"POST"}, name="new_comment")
      */
-    public function newComment(Video $video, Request $request){
+    public function newComment(Video $video, Request $request )
+    {
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED_REMEMBERED');
-        if(!empty(trim($request->request->get('comment')))){
 
-            $entityManager = $this->getDoctrine()->getManager();
+        if ( !empty( trim($request->request->get('comment')) ) )
+        {
+
+            // $video = $this->getDoctrine()->getRepository(Video::class)->find($video_id);
+
             $comment = new Comment();
             $comment->setContent($request->request->get('comment'));
             $comment->setUser($this->getUser());
             $comment->setVideo($video);
 
-            $entityManager->persist($comment);
-            $entityManager->flush();
+            $em = $this->getDoctrine()->getManager();
+            $em->persist($comment);
+            $em->flush();
         }
-        return $this->redirectToRoute('video_details', ['video'=>$video->getId()]);
+
+        return $this->redirectToRoute('video_details',['video'=>$video->getId()]);
     }
 
-
     /**
-     * @Route("/search-results/{page}", methods={"GET"},defaults={"page": "1"}, name="search_results")
+     * @Route("/search-results/{page}", methods={"GET"}, defaults={"page": "1"}, name="search_results")
      */
     public function searchResults($page, Request $request)
     {
+        $videos = null;
+        $query = null;
+
+        if($query = $request->get('query'))
         {
-            $videos = null;
-            $query = null;
+            $videos = $this->getDoctrine()
+                ->getRepository(Video::class)
+                ->findByTitle($query, $page, $request->get('sortby'));
 
-            if($query = $request->get('query'))
-            {
-                $videos = $this->getDoctrine()
-                    ->getRepository(Video::class)
-                    ->findByTitle($query, $page, $request->get('sortby'));
-
-                if(!$videos->getItems()) $videos = null;
-            }
-
-            return $this->render('front/search_results.html.twig',[
-                'videos' => $videos,
-                'query' => $query,
-            ]);
+            if(!$videos->getItems()) $videos = null;
         }
+
+        return $this->render('front/search_results.html.twig',[
+            'videos' => $videos,
+            'query' => $query,
+        ]);
     }
 
     /**
@@ -114,39 +119,30 @@ class FrontController extends AbstractController
     /**
      * @Route("/register", name="register")
      */
-    public function register(Request $request, UserPasswordEncoderInterface $passwordEncoder)
+    public function register(UserPasswordEncoderInterface $password_encoder, Request $request)
     {
-        $user = new User();
+        $user = new User;
         $form = $this->createForm(UserType::class, $user);
         $form->handleRequest($request);
-        if($form->isSubmitted() && $form->isValid()){
+        if ($form->isSubmitted() && $form->isValid())
+        {
             $entityManager = $this->getDoctrine()->getManager();
+
             $user->setName($request->request->get('user')['name']);
             $user->setLastName($request->request->get('user')['last_name']);
             $user->setEmail($request->request->get('user')['email']);
-
-            $password = $passwordEncoder->encodePassword($user,
-                $request->request->get('user')['password']['first']
-            );
-
+            $password = $password_encoder->encodePassword($user, $request->request->get('user')['password']['first']);
             $user->setPassword($password);
             $user->setRoles(['ROLE_USER']);
+
             $entityManager->persist($user);
             $entityManager->flush();
 
             $this->loginUserAutomatically($user, $password);
+
             return $this->redirectToRoute('admin_main_page');
         }
-        return $this->render('front/register.html.twig',[
-            'form'=>$form->createView()
-            ]
-        );
-    }
-
-    private function loginUserAutomatically($user, $password){
-        $token = new UsernamePasswordToken($user,$password,'main',$user->getRoles());
-        $this->get('security.token_storage')->setToken($token);
-        $this->get('session')->set('_security_main', serialize($token));
+        return $this->render('front/register.html.twig',['form'=>$form->createView()]);
     }
 
     /**
@@ -154,7 +150,7 @@ class FrontController extends AbstractController
      */
     public function login(AuthenticationUtils $helper)
     {
-        return $this->render('front/login.html.twig',[
+        return $this->render('front/login.html.twig', [
             'error' => $helper->getLastAuthenticationError()
         ]);
     }
@@ -162,9 +158,9 @@ class FrontController extends AbstractController
     /**
      * @Route("/logout", name="logout")
      */
-    public function logout(): void
+    public function logout() : void
     {
-        throw new \Exception('this should never be reached');
+        throw new \Exception('This should never be reached!');
     }
 
     /**
@@ -184,6 +180,19 @@ class FrontController extends AbstractController
             'categories'=>$categories
         ]);
     }
+
+    private function loginUserAutomatically($user, $password)
+    {
+        $token = new UsernamePasswordToken(
+            $user,
+            $password,
+            'main', // security.yaml
+            $user->getRoles()
+        );
+        $this->get('security.token_storage')->setToken($token);
+        $this->get('session')->set('_security_main',serialize($token));
+    }
+
     /**
      * @Route("/video-list/{video}/like", name="like_video", methods={"POST"})
      * @Route("/video-list/{video}/dislike", name="dislike_video", methods={"POST"})

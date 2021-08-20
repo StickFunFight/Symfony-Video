@@ -4,7 +4,6 @@ namespace App\Tests\Utils;
 
 use App\Twig\SlugifyExtension;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
-use App\Twig\AppExtension;
 
 class CategoryTest extends KernelTestCase
 {
