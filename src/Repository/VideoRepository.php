@@ -51,6 +51,7 @@ class VideoRepository extends ServiceEntityRepository
 
         $dbquery->getQuery();
 
+
         $pagination = $this->paginator->paginate($dbquery, $page, Video::perPage);
         return $pagination;
     }
@@ -81,7 +82,7 @@ class VideoRepository extends ServiceEntityRepository
         else
         {
             $dbquery =  $querybuilder
-                ->addSelect('COUNT(l) AS HIDDEN likes')
+                ->addSelect('COUNT(l) AS HIDDEN likes') // bez hidden zwróci array: count + entity
                 ->leftJoin('v.usersThatLike', 'l')
                 ->groupBy('v')
                 ->orderBy('likes', 'DESC')
@@ -105,7 +106,11 @@ class VideoRepository extends ServiceEntityRepository
 
     private function prepareQuery(string $query): array
     {
-        return explode(' ',$query);
+        $terms = array_unique(explode(' ', $query));
+
+        return array_filter($terms, function ($term) {
+            return 2 <= mb_strlen($term);
+        });
     }
 
 //    /**
@@ -137,3 +142,4 @@ class VideoRepository extends ServiceEntityRepository
     }
      */
 }
+

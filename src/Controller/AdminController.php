@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\Video;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Utils\CategoryTreeAdminList;
@@ -91,7 +92,17 @@ class AdminController extends AbstractController
      */
     public function videos()
     {
-        return $this->render('admin/videos.html.twig');
+        if($this->IsGranted('ROLE_ADMIN'))
+        {
+            $videos = $this->getDoctrine()->getRepository(Video::class)->findAll();
+        }
+        else{
+            $videos = $this->getUser()->getLikedVideos();
+        }
+        return $this->render('admin/videos.html.twig',
+        [
+            'videos'=>$videos
+        ]);
     }
 
     /**
