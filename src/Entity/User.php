@@ -76,6 +76,11 @@ class User implements UserInterface
      */
     private $dislikedVideos;
 
+    /**
+     * @ORM\OneToOne(targetEntity="App\Entity\Subscription", cascade={"persist", "remove"}, orphanRemoval=true)   
+     */
+    private $subscription;
+
     public function __construct()
     {
         $this->likedVideos = new ArrayCollection();
@@ -248,6 +253,18 @@ class User implements UserInterface
             $this->dislikedVideos->removeElement($dislikedVideo);
             $dislikedVideo->removeUsersThatDontLike($this);
         }
+
+        return $this;
+    }
+
+    public function getSubscription(): ?Subscription
+    {
+        return $this->subscription;
+    }
+
+    public function setSubscription(?Subscription $subscription): self
+    {
+        $this->subscription = $subscription;
 
         return $this;
     }

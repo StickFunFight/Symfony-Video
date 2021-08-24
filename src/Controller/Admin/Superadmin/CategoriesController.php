@@ -1,39 +1,38 @@
 <?php
+/*
+|--------------------------------------------------------
+| copyright netprogs.pl | available only at Udemy.com | further distribution is prohibited  ***
+|--------------------------------------------------------
+*/
+namespace App\Controller\Admin\Superadmin;
 
-namespace App\Controller;
-
-use App\Entity\Video;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
-use App\Utils\CategoryTreeAdminList;
-use App\Entity\Category;
-use App\Utils\CategoryTreeAdminOptionList;
-use App\Form\CategoryType;
+
 use Symfony\Component\HttpFoundation\Request;
 
+use App\Utils\CategoryTreeAdminList;
+use App\Entity\Category;
+
+use App\Form\CategoryType;
+
 /**
- * @Route("/admin")
+ * @Route("/admin/su")
  */
-class AdminController extends AbstractController
+class CategoriesController extends AbstractController
 {
+    
     /**
-     * @Route("/", name="admin_main_page")
-     */
-    public function index()
-    {
-        return $this->render('admin/my_profile.html.twig');
-    }
-
-
-    /**
-     * @Route("/su/categories", name="categories", methods={"GET","POST"})
+     * @Route("/categories", name="categories", methods={"GET","POST"})
      */
     public function categories(CategoryTreeAdminList $categories, Request $request)
     {
+        
         $categories->getCategoryList($categories->buildTree());
-
-        $category = new Category();
+        
+        $category = new Category;
         $form = $this->createForm(CategoryType::class, $category);
+
         $is_invalid = null;
 
         if($this->saveCategory($category, $form, $request))
@@ -45,19 +44,22 @@ class AdminController extends AbstractController
             $is_invalid = ' is-invalid';
         }
 
-        return $this->render('admin/categories.html.twig',[
+        return $this->render('admin/categories.html.twig', [
             'categories'=>$categories->categorylist,
-            'form'=>$form->createView(),
-            'is_invalid'=>$is_invalid
+            'form' => $form->createView(),
+            'is_invalid' => $is_invalid
         ]);
     }
 
+
     /**
-     * @Route("/su/edit-category/{id}", name="edit_category", methods={"GET","POST"})
+     * @Route("/edit-category/{id}", name="edit_category", methods={"GET","POST"})
      */
     public function editCategory(Category $category, Request $request)
     {
+
         $form = $this->createForm(CategoryType::class, $category);
+
         $is_invalid = null;
 
         if($this->saveCategory($category, $form, $request))
@@ -70,14 +72,15 @@ class AdminController extends AbstractController
         }
 
         return $this->render('admin/edit_category.html.twig',[
-            'category' => $category,
+            'category'=>$category,
             'form' => $form->createView(),
             'is_invalid' => $is_invalid
-        ]);
+            ]);
     }
 
+
     /**
-     * @Route("/su/delete-category/{id}", name="delete_category")
+     * @Route("/delete-category/{id}", name="delete_category")
      */
     public function deleteCategory(Category $category)
     {
@@ -87,56 +90,12 @@ class AdminController extends AbstractController
         return $this->redirectToRoute('categories');
     }
 
-    /**
-     * @Route("/videos", name="videos")
-     */
-    public function videos()
-    {
-        if($this->IsGranted('ROLE_ADMIN'))
-        {
-            $videos = $this->getDoctrine()->getRepository(Video::class)->findAll();
-        }
-        else{
-            $videos = $this->getUser()->getLikedVideos();
-        }
-        return $this->render('admin/videos.html.twig',
-        [
-            'videos'=>$videos
-        ]);
-    }
-
-    /**
-     * @Route("/su/upload-video", name="upload_video")
-     */
-    public function uploadVideo()
-    {
-        return $this->render('admin/upload_video.html.twig');
-    }
-
-    /**
-     * @Route("/su/users", name="users")
-     */
-    public function users()
-    {
-        return $this->render('admin/users.html.twig');
-    }
-
-    public function getAllCategories(CategoryTreeAdminOptionList $categories, $editedCategory = null)
-    {
-        $categories->getCategoryList($categories->buildTree());
-        return $this->render('admin/_all_categories.html.twig',[
-            'categories'=>$categories,
-            'editedCategory'=>$editedCategory
-        ]);
-    }
 
     private function saveCategory($category, $form, $request)
     {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
         $form->handleRequest($request);
-
-        if($form->isSubmitted() && $form->isValid())
+        if ($form->isSubmitted() && $form->isValid())
         {
             $category->setName($request->request->get('category')['name']);
 
@@ -149,8 +108,9 @@ class AdminController extends AbstractController
             $entityManager->flush();
 
             return true;
+    
         }
         return false;
     }
-}
 
+}
