@@ -6,22 +6,25 @@
 */
 namespace App\Controller;
 
+use App\Controller\Traits\Likes;
+use App\Entity\Comment;
+use App\Entity\User;
+use App\Entity\Video;
+use App\Form\UserType;
+use App\Repository\VideoRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Entity\Category;
-use App\Entity\Video;
-use App\Repository\VideoRepository;
 use App\Utils\CategoryTreeFrontPage;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
-use App\Entity\User;
-use App\Form\UserType;
-use App\Entity\Comment;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 
 class FrontController extends AbstractController
 {
+    use Likes;
+
     /**
      * @Route("/", name="main_page")
      */
@@ -226,45 +229,4 @@ class FrontController extends AbstractController
         return $this->json(['action' => $result,'id'=>$video->getId()]);
     }
 
-    private function likeVideo($video)
-    {
-        $user = $this->getDoctrine()->getRepository(User::class)->find($this->getUser());
-        $user->addLikedVideo($video);
-
-        $em = $this->getDoctrine()->getManager();
-        $em->persist($user);
-        $em->flush();
-        return 'liked';
-    }
-    private function dislikeVideo($video)
-    {
-        $user = $this->getDoctrine()->getRepository(User::class)->find($this->getUser());
-        $user->addDislikedVideo($video);
-
-        $em = $this->getDoctrine()->getManager();
-        $em->persist($user);
-        $em->flush();
-        return 'disliked';
-    }
-    private function undoLikeVideo($video)
-    {
-        $user = $this->getDoctrine()->getRepository(User::class)->find($this->getUser());
-        $user->removeLikedVideo($video);
-
-        $em = $this->getDoctrine()->getManager();
-        $em->persist($user);
-        $em->flush();
-        return 'undo liked';
-    }
-    private function undoDislikeVideo($video)
-    {
-        $user = $this->getDoctrine()->getRepository(User::class)->find($this->getUser());
-        $user->removeDislikedVideo($video);
-
-        $em = $this->getDoctrine()->getManager();
-        $em->persist($user);
-        $em->flush();
-        return 'undo disliked';
-    }
 }
-
