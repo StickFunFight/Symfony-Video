@@ -6,6 +6,7 @@
 */
 namespace App\Controller\Admin\Superadmin;
 
+use App\Entity\User;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -29,8 +30,24 @@ class SuperAdminController extends AbstractController
      */
     public function users()
     {
-        return $this->render('admin/users.html.twig');
+
+        $repository = $this->getDoctrine()->getRepository(User::class);
+        $users = $repository->findBy([], ['name' => 'ASC']);
+        return $this->render('admin/users.html.twig',['users'=>$users]);
     }
-    
+
+
+    /**
+     * @Route("/delete-user/{user}", name="delete_user")
+     */
+    public function deleteUser(User $user)
+    {
+        $manager = $this->getDoctrine()->getManager();
+        $manager->remove($user);
+        $manager->flush();
+
+        return $this->redirectToRoute('users');
+    }
+
 
 }
